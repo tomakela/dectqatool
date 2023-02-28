@@ -4,7 +4,7 @@
 *WIP*
 ### DECT Phantom
 *WIP*
-This tools aims to make offline analysis of DECT images acquired from Multi-Energy CT Phantom by Sun Nuclear (https://www.sunnuclear.com/products/multi-energy-ct-phantom) easy. Some pointing&clicking is still required.
+This tools aims to make offline analysis of DECT images acquired from Multi-Energy CT Phantom by Sun Nuclear (https://www.sunnuclear.com/products/multi-energy-ct-phantom) easy. Some pointing&clicking is still required. It is a modification to 3D Slicer (https://www.slicer.org/). The code adds a toolbar, i.e. it is not a module(!), meant to be clicked through by the user. This is mainly because the suggested workflow uses standard modules for control point modifications and calculating statistics. Tested on 3D Slicer 5.0.2 (and newer)
 
 ## Basic usage
 ### Installation
