@@ -1,19 +1,22 @@
 # dectqatool: Dual Energy CT QA Tool
 ## Introduction
 ### Dual Energy CT
-*WIP*
-### DECT Phantom
-*WIP*
-This tools aims to make offline analysis of DECT images acquired from Multi-Energy CT Phantom by Sun Nuclear (https://www.sunnuclear.com/products/multi-energy-ct-phantom) easy. Some pointing&clicking is still required. It is a modification to 3D Slicer (https://www.slicer.org/). The code adds a toolbar, i.e. it is not a module(!), meant to be clicked through by the user. This is mainly because the suggested workflow uses standard modules for control point modifications and calculating statistics. Tested on 3D Slicer 5.0.2 (and newer)
+Dual Energy Computed Tomography (DECT) utilizes multiple X-ray tube voltages in forming the images, by utilizing differing attenuation properties, and therefore contrasts, between the two energy spectrums. In addition to normal image reconstruction with kernel and other parameters, DECT includes additional post-processing steps such as material decomposition, or virtual monoenergetic or non-contrast images. Comprehensive DECT quality assurance (QA) includes both traditional CT instrumentation monitorin (such as radiation measurements and HU consistency), but also the subsequent processing steps taken by (possibly external) reconstruction and analysis software.
+### Tool for DECT Phantom
+This tools aims to make offline analysis of DECT images acquired from Multi-Energy CT Phantom by Sun Nuclear (https://www.sunnuclear.com/products/multi-energy-ct-phantom) easy. The phantom contains inserts with various elemental compositions, such as various calcium and iodine targets. Some pointing&clicking is still required. It is a modification to 3D Slicer (https://www.slicer.org/): the code adds a toolbar, i.e. it is not a module(!), meant to be clicked through by the user. This is mainly because the suggested workflow uses standard modules for control point modifications and calculating statistics. Tested on 3D Slicer 5.0.2 (and newer)
+![image](https://user-images.githubusercontent.com/9822663/229784606-1fb08dd0-60b2-4476-9c19-31c602af9736.png)
 
 ## Basic usage
 ### Installation
-To add the Toolbar copy *.slicer.rc* to your home folder. In Windows something like c:\users\username and in Linux/MacOS something like /home/username, or point to it in 3D Slicer *Edit>Applicatin Settings>General>Application startup script* (you might like to rename the file as non-hidden)
+To add the Toolbar copy *.slicer.rc* to your home folder. In Windows something like c:\users\username and in Linux/MacOS something like /home/username, or point to it in 3D Slicer *Edit>Application Settings>General>Application startup script* (you might like to rename the file as non-hidden)
 
 Note: you can also copy-paste the file contents to 3D Slicer python interactor (View>Python Interactor or ctrl+3)
 ### Steps
-Load your data to 3D Slicer. It is advised to use Add DICOM Data module if opening multiple dicom files fails. **All the magic happens in the Red Slice view**. Set it to axial.
-![image](https://user-images.githubusercontent.com/9822663/221780567-1686f3a2-ad51-48f0-877a-38f4757f2141.png)
+Load your data to 3D Slicer. If opening multiple DICOM files fails, it is advised to use *Add DICOM Data* module. Make sure you are not loading the data as MultiVolume! This can happen, if you load multiple series from the same study. So.. Add DICOM data>Advanced>Examine>Select Scalar volume reader>Load:
+![image](https://user-images.githubusercontent.com/9822663/229774002-591338f8-9a55-4130-8cb8-9d20a4a63943.png)
+
+We assume that you have imaged the phantom in normal position. Using gantry tilt will most likely make the software to fail. **All the magic happens in the Red Slice view**. Set it to axial.
+
 **1) Loc. phantom** tries to detect the high contrast fiducials in the phantom middle. If it doesn't work, move to the correct slice manually. Preferrably use base images (normal CT images) for this, i.e. active background volume in Red view
 ![image](https://user-images.githubusercontent.com/9822663/221784632-3da6419e-d8eb-4b14-b9c1-f2a702eac705.png)  
 **2) Move -35 mm** (and **5) Move +70 mm**) translates the Red View accordingly  
@@ -26,7 +29,7 @@ You can easily fix small rotation errors in the Transforms-module
 - You can transform the whole phantom, the middle segment ("Head phantom"), the s-insert, or body part separately
 - You can also drag the fiducials as needed for the first slice  
 
-**4) Draw to label** creates the ROIs for the current slice
+**4) Draw to label** creates ROIs for the current slice
 - **YOU CAN CHANGE THE ROI/VOI RADIUS IN THE MARKUP MODULE** by editing the description  
 ![image](https://user-images.githubusercontent.com/9822663/221791227-a9204724-74f1-43c4-9f83-24fcb39b14db.png)  
 - You can redo the current ROI if needed (drag fiducials etc)  
@@ -50,7 +53,6 @@ The table can be saved as tab- or comma-separated or .txt
 ![image](https://user-images.githubusercontent.com/9822663/221789659-8fb3d39f-db63-490a-9a51-ac7ce54013e0.png)
 
 ### Known bugs and TO-DO
-- If you close scene, you will lose the colormap used. Restart slicer before analysis (There is a nice button for it in the toolbar!). To be fixed.
 - Add sample data
 - Comment the code
 ## Disclaimer
