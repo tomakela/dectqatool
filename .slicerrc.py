@@ -7,32 +7,6 @@ def init():
   for node in getNodesByClass('vtkMRMLSliceCompositeNode'):
     node.SetLinkedControl(1)
   
-  # create custom colormap, end init if exists  
-  if len(getNodes('custom_color')) > 0:
-    return
-  
-  segment_names_to_labels = [("bg", 0), ("c", 1), ("s", 2), ("h0", 3), ("h1", 4), ("h2", 5), ("h3", 6), ("h4", 7), ("h5", 8), ("h6", 9), ("h7", 10),
-                             ("b0", 11), ("b1", 12), ("b2", 13), ("b3", 14), ("b4", 15), ("b5", 16), ("h_unif", 17), ("b_unif", 18)]
-  
-  
-  colorTableNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode","custom_color")
-  colorTableNode.SetTypeToUser()
-  colorTableNode.HideFromEditorsOff()  # make the color table selectable in the GUI outside Colors module
-  slicer.mrmlScene.AddNode(colorTableNode); colorTableNode.UnRegister(None)
-  colorTableNode.SetNumberOfColors(19)
-  colorTableNode.SetNamesInitialised(True) # prevent automatic color name generation
-  
-  random.seed(1) #deterministic random values
-  for segmentName, labelValue in segment_names_to_labels:
-    if labelValue == 0:
-      r,g,b,a = 0,0,0,0
-    else:
-      r = random.uniform(0.0, 1.0)
-      g = random.uniform(0.0, 1.0)
-      b = random.uniform(0.0, 1.0)
-      a = 0.4    
-    success = colorTableNode.SetColor(labelValue, segmentName, r, g, b, a)
-
 # locate orientation fiducials
 def locate():
   z_axis = 0
@@ -53,16 +27,6 @@ def locate():
 # detect phantom edges and use assumed locations for inserts
 def detect():
   volNode = getNode(slicer.app.applicationLogic().GetSliceLogic(slicer.app.layoutManager().sliceWidget("Red").mrmlSliceNode()).GetSliceCompositeNode().GetBackgroundVolumeID())
-  tmp = slicer.util.getNodes('inserts-label')
-  if len(tmp) > 0:
-    labelNode = tmp.popitem(last=False)[1]
-  else:
-    labelNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode",'inserts-label')
-    slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelNode, volNode)
-    slicer.util.updateVolumeFromArray(labelNode, (slicer.util.arrayFromVolume(labelNode) * 0).astype("int8"))
-    labelNode.GetDisplayNode().SetAndObserveColorNodeID(getNode('custom_color').GetID())
-  for col in ("Red","Green","Yellow"):
-    slicer.app.applicationLogic().GetSliceLogic(slicer.app.layoutManager().sliceWidget(col).mrmlSliceNode()).GetSliceCompositeNode().SetLabelVolumeID(labelNode.GetID())
   
   for node in getNodesByClass('vtkMRMLMarkupsFiducialNode'):
     slicer.mrmlScene.RemoveNode(node)
@@ -145,6 +109,45 @@ def detect():
 
 # clear current label map slice and draw ROIs based on the markups (radius in markup description)
 def draw():
+  # create custom colormap, delete if exist first. This fixes the issue with closing the scene instead of restarting
+  for i in getNodesByClass('vtkMRMLColorTableNode'):
+    if i.GetName() == 'custom_color':
+      slicer.mrmlScene.RemoveNode(i)
+  
+  segment_names_to_labels = [("bg", 0), ("c", 1), ("s", 2), ("h0", 3), ("h1", 4), ("h2", 5), ("h3", 6), ("h4", 7), ("h5", 8), ("h6", 9), ("h7", 10),
+                            ("b0", 11), ("b1", 12), ("b2", 13), ("b3", 14), ("b4", 15), ("b5", 16), ("h_unif", 17), ("b_unif", 18)]
+  
+  
+  colorTableNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLColorTableNode","custom_color")
+  colorTableNode.SetTypeToUser()
+  colorTableNode.HideFromEditorsOff()  # make the color table selectable in the GUI outside Colors module
+  slicer.mrmlScene.AddNode(colorTableNode); colorTableNode.UnRegister(None)
+  colorTableNode.SetNumberOfColors(len(segment_names_to_labels))
+  colorTableNode.SetNamesInitialised(True) # prevent automatic color name generation
+  
+  random.seed(1) #deterministic random values
+  for segmentName, labelValue in segment_names_to_labels:
+    if labelValue == 0:
+      r,g,b,a = 0,0,0,0
+    else:
+      r = random.uniform(0.0, 1.0)
+      g = random.uniform(0.0, 1.0)
+      b = random.uniform(0.0, 1.0)
+      a = 0.4    
+    success = colorTableNode.SetColor(labelValue, segmentName, r, g, b, a)
+
+  volNode = getNode(slicer.app.applicationLogic().GetSliceLogic(slicer.app.layoutManager().sliceWidget("Red").mrmlSliceNode()).GetSliceCompositeNode().GetBackgroundVolumeID())
+  tmp = slicer.util.getNodes('inserts-label')
+  if len(tmp) > 0:
+    labelNode = tmp.popitem(last=False)[1]
+  else:
+    labelNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLLabelMapVolumeNode",'inserts-label')
+    slicer.vtkSlicerVolumesLogic().CreateLabelVolumeFromVolume(slicer.mrmlScene, labelNode, volNode)
+    slicer.util.updateVolumeFromArray(labelNode, (slicer.util.arrayFromVolume(labelNode) * 0).astype("int8"))    
+  for col in ("Red","Green","Yellow"):
+    slicer.app.applicationLogic().GetSliceLogic(slicer.app.layoutManager().sliceWidget(col).mrmlSliceNode()).GetSliceCompositeNode().SetLabelVolumeID(labelNode.GetID())
+
+  labelNode.GetDisplayNode().SetAndObserveColorNodeID(colorTableNode.GetID())
   # exclude boundaries from the head and body background ROIs:
   TOL_HEAD_PART            = 5  # mm from the head phantom boundary
   R_AND_TOL_AROUND_INSERTS = 20 # mm from the middle of the insert
@@ -242,7 +245,6 @@ def select_segmenteditor():
 
 slicer.util.mainWindow().addToolBarBreak()
 tb = slicer.util.mainWindow().addToolBar("Custom")
-tb.addWidget(qt.QPushButton("Add")).defaultWidget().connect('clicked()',slicer.util.openAddVolumeDialog)
 tb.addWidget(qt.QPushButton("Restart")).defaultWidget().connect('clicked()',verify_restart)
 tb.addWidget(qt.QPushButton("1) Loc. phantom")).defaultWidget().connect('clicked()',locate)
 tb.addWidget(qt.QPushButton("2) Move -35mm")).defaultWidget().connect('clicked()',move_minus35)
